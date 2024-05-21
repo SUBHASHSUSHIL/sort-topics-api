@@ -1,0 +1,244 @@
+//Normal Ado Connectivity through Crud Api
+
+//create database
+
+create database AspDotnetCoreWebApi
+use AspDotnetCoreWebApi
+
+create table EmployeWebApi(Id int identity(1,1) primary key,Name varchar(max) not null,Email nvarchar(max) not null,Designation varchar(max) not null,Salary bigint not null,Tdate date default getdate());
+
+insert into EmployeWebApi(Name,Email,Designation,Salary) values ('Sushil Kumar Thakur','sushilthakur9792@gmail.com','Study',16542);
+
+select * from EmployeWebApi
+
+create procedure _Employee
+@Id int,
+@Name varchar(max),
+@Email nvarchar(max),
+@Designation varchar(max),
+@Salary bigint,
+@Type varchar(max)
+as
+begin
+	if(@Type='EmpInsert')
+	begin
+	insert into EmployeWebApi(Name,Email,Designation,Salary) values (@Name,@Email,@Designation,@Salary);
+	end
+	else if(@Type='GetAll')
+	begin
+	select * from EmployeWebApi;
+	end
+	else if(@Type='GetId')
+	begin
+	select * from EmployeWebApi where Id = @Id;
+	end
+	else if(@Type='EmpUpdate')
+	begin
+	update EmployeWebApi set Name = @Name,Email = @Email,Designation = @Designation,Salary = @Salary where Id = @Id;
+	end
+	else if(@Type='EmpDelete')
+	begin
+	Delete from EmployeWebApi where Id = @Id;
+	end
+end
+
+
+//Create New Application:-
+//ASP.NET Core Web Api 
+1.Step:->Models create
+2.Step:->Controller create
+  1.Step:->first models Class create in class properties define
+  2.Step:->second model class Create in Ado Connectivity define
+
+1.Step:->first models Class create in class properties define:->
+namespace ASPCoreWebApi.Models
+{
+    public class EmployeeModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Designation { get; set; } = "";
+        public long Salary { get; set; }
+        public string Type { get; set; } = "";
+    }
+}
+
+2.Step:->second model class Create in Ado Connectivity define:->
+using ASPCoreWebApi.Models;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace ASPCoreWebApi.Models
+{
+    public class AdoConnectivity
+    {
+        SqlConnection con = new SqlConnection("server=DESKTOP-F1LI6MI;initial catalog=AspDotnetCoreWebApi;integrated security=true;");
+
+        public string CrudOperation(EmployeeModel employee)
+        {
+            string message = string.Empty;
+            try
+            {
+                SqlCommand cmd = new SqlCommand("_Employee", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@Id", employee.Id);
+                cmd.Parameters.AddWithValue("@Name", employee.Name);
+                cmd.Parameters.AddWithValue("@Email", employee.Email);
+                cmd.Parameters.AddWithValue("@Designation", employee.Designation);
+                cmd.Parameters.AddWithValue("@Salary", employee.Salary);
+                cmd.Parameters.AddWithValue("@Type", employee.Type);
+                if (con.State == ConnectionState.Closed)
+                {
+                    con.Open();
+                }
+                cmd.ExecuteNonQuery();
+                message = "Record is inserted..";
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+            finally
+            {
+                if(con.State == ConnectionState.Open)
+                {
+                    con.Close();
+                }
+            }
+            return message;
+        }
+
+        public DataSet EmployeeGet(EmployeeModel employee)
+        {
+            string message = string.Empty;
+            DataSet ds = new DataSet();
+            try
+            {
+                SqlCommand cmd = new SqlCommand("_Employee", con);
+                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@Id", employee.Id);
+                cmd.Parameters.AddWithValue("@Name", employee.Name);
+                cmd.Parameters.AddWithValue("@Email", employee.Email);
+                cmd.Parameters.AddWithValue("@Designation", employee.Designation);
+                cmd.Parameters.AddWithValue("@Salary", employee.Salary);
+                cmd.Parameters.AddWithValue("@Type", employee.Type);
+                SqlDataAdapter adp = new SqlDataAdapter(cmd);
+                adp.Fill(ds);
+                message = "Record is inserted..";
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+            finally
+            {
+                if (con.State == ConnectionState.Open)
+                {
+                    con.Close();
+                }
+            }
+
+            return ds;
+        }
+    }
+}
+
+//2.Step:->Controller create:->
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using ASPCoreWebApi.Models;
+using System.Data;
+
+namespace ASPCoreWebApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EmployeeController : ControllerBase
+    {
+
+
+        AdoConnectivity _db = new AdoConnectivity();
+        string message = string.Empty;
+
+        [HttpGet]
+        public List<EmployeeModel> Get()
+        {
+            EmployeeModel employee = new EmployeeModel();
+            employee.Type = "GetAll";
+            DataSet ds = _db.EmployeeGet(employee);
+            List<EmployeeModel> list = new List<EmployeeModel>();
+            foreach(DataRow dr  in ds.Tables[0].Rows)
+            {
+                list.Add(new EmployeeModel
+                {
+                    Id = Convert.ToInt32(dr["Id"]),
+                    Name = dr["Name"].ToString(),
+                    Email = dr["Email"].ToString(),
+                    Designation = dr["Designation"].ToString(),
+                    Salary = Convert.ToInt32(dr["Salary"])
+                });
+            }
+            return list;
+        }
+
+        [HttpGet("{id}")]
+        public List<EmployeeModel> Get(int id)
+        {
+            EmployeeModel employee = new EmployeeModel();
+            employee.Type = "GetId";
+            employee.Id = id;
+            DataSet ds = _db.EmployeeGet(employee);
+            List<EmployeeModel> list = new List<EmployeeModel>();
+            foreach (DataRow dr in ds.Tables[0].Rows)
+            {
+                list.Add(new EmployeeModel
+                {
+                    Id = Convert.ToInt32(dr["Id"]),
+                    Name = dr["Name"].ToString(),
+                    Email = dr["Email"].ToString(),
+                    Designation = dr["Designation"].ToString(),
+                    Salary = Convert.ToInt32(dr["Salary"])
+                });
+            }
+            return list;
+        }
+
+        [HttpPost]
+        public string Post([FromBody] EmployeeModel employee)
+        {
+            //employee.Type = "EmpInsert";
+            message=_db.CrudOperation(employee);
+            return message;
+        }
+
+        [HttpPut("{id}")]
+        public string Put([FromBody]EmployeeModel employee,int id)
+        {
+            employee.Type = "EmpUpdate";
+            employee.Id = id ;
+            message =_db.CrudOperation(employee);
+            return message;
+        }
+
+        [HttpDelete("{id}")]
+        public string Delete(int id)
+        {
+            EmployeeModel employee = new EmployeeModel();
+            employee.Type = "EmpDelete";
+            employee.Id = id ;
+            message =_db.CrudOperation(employee);
+            return message;
+        }
+
+    }
+}
+
+
+
+
+
+
+
+
+
