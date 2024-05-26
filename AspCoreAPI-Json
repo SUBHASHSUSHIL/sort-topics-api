@@ -1,0 +1,154 @@
+//API-Json (CRUD-Operation)
+
+1.Step-Create Database in SqlServer
+//SqlServer
+create database AspEfApi
+use AspEfApi
+select * from Employees
+insert into Employees(Name,Designation,Salary,City,State) values ('sushil','study','8000','Gopalganj','Bihar')
+create table Department(DId int ,DName nvarchar(100));
+
+
+2.Step-Create new Project visual studio 2022 in ASPNETCoreWebApplication
+
+3.Create models class
+//Class
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ApiCon.Models
+{
+    public class DepModel
+    {
+        public int DId { get; set; }
+        public string DName { get; set; } = "";
+    }
+}
+
+4.include data in appse3ttings.json file
+  "ConnectionStrings": {
+  "dbcs": "server=DESKTOP-F1LI6MI;initial catalog=AspEfApi;integrated security=true;"
+},
+
+5.include code in Program.cs file
+  //Add json Serilizer
+builder.Services.AddControllers().AddNewtonsoftJson(option => option.SerializerSettings.ReferenceLoopHandling = 
+Newtonsoft.Json.ReferenceLoopHandling.Ignore).AddNewtonsoftJson(option => option.SerializerSettings.
+ContractResolver = new DefaultContractResolver());
+
+6.Create Controller
+//Controller
+using ApiCon.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace ApiCon.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DepartmentController : ControllerBase
+    {
+        private readonly IConfiguration configuration;
+        public DepartmentController(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
+        [HttpGet]
+        public JsonResult Get()
+        {
+            string query = "select DId,DName from Department";
+            DataTable dt = new DataTable();
+            string Con = configuration.GetConnectionString("dbcs");
+            SqlConnection con = new SqlConnection(Con);
+            SqlCommand cmd = new SqlCommand(query, con);
+            if(con.State == ConnectionState.Closed)
+            {
+                con.Open();
+            }
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+            if(con.State == ConnectionState.Open)
+            {
+                con.Close();
+            }
+            return new JsonResult(dt);
+        }
+
+        [HttpPost]
+        public JsonResult Post(DepModel obj)
+        {
+            string query = "insert into Department(DId,DName) values (@DId,@DName)";
+            DataTable dt = new DataTable();
+            string Con = configuration.GetConnectionString("dbcs");
+            SqlConnection con = new SqlConnection(Con);
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@DId", obj.DId);
+            cmd.Parameters.AddWithValue("@DName",obj.DName);
+            if (con.State == ConnectionState.Closed)
+            {
+                con.Open();
+            }
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+            if (con.State == ConnectionState.Open)
+            {
+                con.Close();
+            }
+            return new JsonResult("Insert");
+        }
+
+        [HttpPut]
+        public JsonResult Put(DepModel obj)
+        {
+            string query = "update Department set DName = @DName where DId = @DId";
+            DataTable dt = new DataTable();
+            string Con = configuration.GetConnectionString("dbcs");
+            SqlConnection con = new SqlConnection(Con);
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@DId", obj.DId);
+            cmd.Parameters.AddWithValue("@DName", obj.DName);
+            if (con.State == ConnectionState.Closed)
+            {
+                con.Open();
+            }
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+            if (con.State == ConnectionState.Open)
+            {
+                con.Close();
+            }
+            //return new JsonResult(dt);
+            return new JsonResult("Update");
+        }
+
+        [HttpDelete]
+        public JsonResult Delete(int id)
+        {
+            string query = "delete from Department where DId = @DId";
+            DataTable dt = new DataTable();
+            string Con = configuration.GetConnectionString("dbcs");
+            SqlConnection con = new SqlConnection(Con);
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@DId", id);
+            if (con.State == ConnectionState.Closed)
+            {
+                con.Open();
+            }
+            SqlDataReader dr = cmd.ExecuteReader();
+            dt.Load(dr);
+            if (con.State == ConnectionState.Open)
+            {
+                con.Close();
+            }
+            return new JsonResult(dt);
+        }
+    }
+}
+
