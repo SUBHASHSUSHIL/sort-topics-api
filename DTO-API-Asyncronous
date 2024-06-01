@@ -1,0 +1,352 @@
+DTO = Data Transfer Object(Dto Proccess) :- Dto ka matlab step by step proccess
+    //Client >>>>>Dto >>>> API >>>>>Domain Model >>>>> Database
+1.Step Create Entities(Class) in Model Then Seprate folder
+  1.Difficulties.
+  2.Region.
+  3.Walk.
+1.Difficulties:-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WalkProject.Models.Domain
+{
+    public class Defficulty
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+    }
+}
+
+2.Region:-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WalkProject.Models.Domain
+{
+    public class Region
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Code { get; set; } = "";
+        public string? RegionalImageUrl { get; set; }
+
+    }
+}
+
+3.Walk:-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WalkProject.Models.Domain
+{
+    public class Walk
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string LengthInKM { get; set; } = "";
+        public string? WalkImageUrl { get; set; }
+
+        public Guid DefficultId { get; set; }
+        public Guid RegionId { get; set; }
+
+        //Navigation prop
+
+        public Defficulty Defficulty {  get; set; }
+        public Region Region { get; set; }
+    }
+}
+
+=Next Step Install 3 Package in nudget to browser:-
+1.Microshoft.EntityFrameworkCore.
+2.Microshoft.EntityFrameworkCore.Tools.
+3.Microshoft.EntityFrameworkCore.SqlServer.
+
+
+=Next Step Configuration in SqlServer:-
+1.AppSetting files:-
+"ConnectionStrings": {
+  "WalkProjectConstr": "server=DESKTOP-F1LI6MI; initial catalog=WalkProjectDb;integrated security=true;TrustServerCertificate=true;Trusted_Connection=true;"
+},
+
+
+=Next Step Include in Dependencies :-
+1.Program.cs Files:-
+//Add Dependency Injection Context
+builder.Services.AddDbContext<WalkProjectDbContext>(Options => Options.UseSqlServer(builder.Configuration.GetConnectionString("WalkProjectConstr")));
+
+
+=Next Step Connection in DbContext(Connection Database)
+1.create seprate folder-->create DbEntities(DbClass) :-
+using Microsoft.EntityFrameworkCore;
+using WalkProject.Models.Domain;
+
+namespace WalkProject.Data
+{
+    public class WalkProjectDbContext:DbContext
+    {
+        public WalkProjectDbContext(DbContextOptions dbContextOptions):base(dbContextOptions)
+        {
+        }
+
+        public DbSet<Region> Regions { get; set; }
+        public DbSet<Defficulty> Defficultys { get; set;}
+        public DbSet<Walk> walks { get; set; }
+    }
+}
+
+=Next Step Use in Migration:-
+1.add-migration 'Initial'
+2.update-database
+
+
+=Next Step check in SqlServer create Database and Table then insert in 1 to 2 Data  after that Successfully ..
+
+=Next Step Model folder after DTO name create folder after that Create 3 Entities(Class) after seprate in folder.
+1.Insertion.
+2.Updation.
+3.Dispalay.
+
+1.Insertion:-
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+
+namespace WalkProject.Models.DTO
+{
+    public class AddRegionRequestDTO
+    {
+        public Guid Id { get; internal set; }
+        public string Name { get; set; } = "";
+        public string Code { get; set; } = "";
+        public string? RegionalImageUrl { get; set; }
+    }
+}
+
+2.Updation:-
+namespace WalkProject.Models.DTO
+{
+    public class UpdateRegionRequestDto
+    {
+        public string Name { get; set; }
+        public string Code { get; set; }
+        public string? RegionalImageUrl { get; set; }
+    }
+}
+
+3.Dispalay:-
+namespace WalkProject.Models.DTO
+{
+    public class RegionDTO
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Code { get; set; } = "";
+        public string? RegionImageUrl { get; set; }
+    }
+}
+
+
+=Next Step create Controller:-(Asyncronous Use)
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WalkProject.Models.Domain;
+using WalkProject.Data;
+using WalkProject.Models.DTO;
+
+namespace WalkProject.Controllers
+{
+    //DTO = Data Transfer Object(Dto Proccess)
+    //Client >>>>>Dto >>>> API >>>>>Domain Model >>>>> Database
+    [Route("api/[controller]")]
+    [ApiController]
+    public class RegionsController : ControllerBase
+    {
+        private readonly WalkProjectDbContext _context;
+        public RegionsController(WalkProjectDbContext dbContext)
+        {
+            this._context = dbContext;
+        }
+
+
+        //[HttpGet]
+        //public IActionResult GetAll()
+        //{
+        //    var region = new List<Region>
+        //    {
+        //        new Region
+        //        {
+        //            Id= Guid.NewGuid(),
+        //            Name= "Australia Region",
+        //            Code="Aus",
+        //            RegionalImageUrl="Aus-Image.jpg"
+        //        },
+        //        new Region
+        //        {
+        //            Id= Guid.NewGuid(),
+        //            Name= "India Region",
+        //            Code="IND",
+        //            RegionalImageUrl="IND-Image.jpg"
+        //        },
+        //        new Region
+        //        {
+        //            Id= Guid.NewGuid(),
+        //            Name= "Pakistan Region",
+        //            Code="Pak",
+        //            RegionalImageUrl="Pak-Image.jpg"
+        //        }
+        //    };
+        //    return Ok(region);
+        //}
+
+        //[HttpGet]
+        //public IActionResult GetAll()
+        //{
+        //    //Data comes through in Model
+        //    var region = _context.Regions.ToList();
+        //    return Ok(region);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            // Model through data hit
+            //all data display
+            //var region = _context.Regions.ToList();
+            //return Ok(region);
+
+            //DTO Through data hit 
+            //All data display
+            var regionDomain = await _context.Regions.ToListAsync();
+            var regionDto = new List<RegionDTO>();
+            foreach (var regionitem in regionDomain)
+            {
+                regionDto.Add(new RegionDTO()
+                {
+                    Id = regionitem.Id,
+                    Name = regionitem.Name,
+                    Code = regionitem.Code,
+                    RegionImageUrl = regionitem.RegionalImageUrl,
+                });
+
+            }
+            return Ok(regionDto);
+        }
+
+        [HttpGet]
+        [Route("{id:Guid}")]
+        public async Task<IActionResult> GetBYId([FromRoute] Guid id)
+        {
+            //Model through Data hit
+            ////var region = _context.Regions.Find(id);
+            //var region = _context.Regions.FirstOrDefault(x => x.Id == id);//(Lambda Expression Code)
+            //if(region == null)
+            //{
+            //    return NotFound();
+            //}
+            //return Ok(region);
+
+
+            var regions = await _context.Regions.FirstOrDefaultAsync(x => x.Id == id);
+            if (regions == null)
+            {
+                return NotFound();
+            }
+            var regionDto = new RegionDTO()
+            {
+                Id = regions.Id,
+                Name = regions.Name,
+                Code = regions.Code,
+                RegionImageUrl = regions.RegionalImageUrl,
+
+            };
+            return Ok(regions);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] AddRegionRequestDTO addRegionDto)
+        {
+            var RegionDomainModel = new Region
+            {
+                Code = addRegionDto.Code,
+                Name = addRegionDto.Name,
+                RegionalImageUrl = addRegionDto.RegionalImageUrl,
+            };
+
+            await _context.Regions.AddAsync(RegionDomainModel);
+            await _context.SaveChangesAsync();
+
+
+            var regionDto = new RegionDTO()
+            {
+                Name = addRegionDto.Name,
+                Code = addRegionDto.Code,
+                RegionImageUrl = addRegionDto.RegionalImageUrl
+            };
+
+
+            return CreatedAtAction(nameof(GetBYId), new { id = RegionDomainModel.Id }, RegionDomainModel);
+        }
+
+        [HttpPut]
+        [Route("{id:Guid}")]
+        public async Task<IActionResult> Update([FromRoute] Guid id,[FromBody] UpdateRegionRequestDto updateRegionRequestDto)
+        {
+            var updateRequestDto = await _context.Regions.FirstOrDefaultAsync(x => x.Id == id);
+            if(updateRequestDto == null)
+            {
+                NotFound();
+            }
+            //map domain to dto
+            updateRequestDto.Code = updateRegionRequestDto.Code;
+            updateRequestDto.Name = updateRegionRequestDto.Name;
+            updateRequestDto.RegionalImageUrl = updateRegionRequestDto.RegionalImageUrl;
+            await _context.SaveChangesAsync();
+
+            //convert domain mode to dto
+            var regionDto = new RegionDTO()
+            {
+                Id = updateRequestDto.Id,
+                Name = updateRequestDto.Name,
+                Code = updateRequestDto.Code,
+                RegionImageUrl = updateRequestDto.RegionalImageUrl
+            };
+            return Ok(regionDto);
+        }
+
+        [HttpDelete]
+        [Route("{id:Guid}")]
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            var reagionDomain = await _context.Regions.FirstOrDefaultAsync(x => x.Id == id);
+            if (reagionDomain == null)
+            {
+                NotFound();
+            }
+           _context.Regions.Remove(reagionDomain);
+            await _context.SaveChangesAsync();
+
+            //convert domain mode to dto
+            var regionDto = new RegionDTO()
+            {
+                Id = reagionDomain.Id,
+                Name = reagionDomain.Name,
+                Code = reagionDomain.Code,
+                RegionImageUrl = reagionDomain.RegionalImageUrl
+            };
+            return Ok(regionDto);
+        }
+
+    }
+}
+
+
+Then Execute Successfully....
