@@ -1,0 +1,142 @@
+//create Repository pattern:-(Class and Interface)
+
+1.Step:-create in Model.
+=>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WalkProject.Models.Domain
+{
+    public class Region
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Code { get; set; } = "";
+        public string? RegionalImageUrl { get; set; }
+
+    }
+}
+
+2.Step:-(Connection in Database)
+"ConnectionStrings": {
+  "WalkProjectConstr": "server=DESKTOP-F1LI6MI; initial catalog=WalkProjectDb;integrated security=true;TrustServerCertificate=true;Trusted_Connection=true;"
+},
+
+3.Step:-(include in dependency injection)Program.cs file.
+
+//Add Dependency Injection Context
+builder.Services.AddDbContext<WalkProjectDbContext>(Options => Options.UseSqlServer
+(builder.Configuration.GetConnectionString("WalkProjectConstr")));
+
+
+5.create seprate data folder / create seprate dbContext file(.cs file):-
+using Microsoft.EntityFrameworkCore;
+using WalkProject.Models.Domain;
+
+namespace WalkProject.Data
+{
+    public class WalkProjectDbContext:DbContext
+    {
+        public WalkProjectDbContext(DbContextOptions dbContextOptions):base(dbContextOptions)
+        {
+        }
+
+        public DbSet<Region> Regions { get; set; }
+        public DbSet<Defficulty> Defficultys { get; set;}
+        public DbSet<Walk> walks { get; set; }
+    }
+}
+
+
+6. Use in IdentityFrramework in migration:-
+1.add-migration  'Initial'
+2.update database
+
+7.Create seprate Repository folder then two file include in repository folder:-
+1.Interfaces
+2.Class
+
+1.Interfaces:-
+using WalkProject.Models.Domain;
+
+namespace WalkProject.Repository
+{
+    public interface IRegionRepository
+    {
+        Task<List<Region>> GetAllAsync();
+        Task<Region> CreateAsync(Region region);
+        Task<Region?> UpdateAsync(Guid id,Region region);
+        Task<Region?> DeleteAsync(Guid id);
+        Task<Region?> GetBYIdAsync(Guid id);
+    }
+}
+
+2.Class:-
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.EntityFrameworkCore;
+using WalkProject.Data;
+using WalkProject.Models.Domain;
+
+namespace WalkProject.Repository
+{
+    public class SqlRegionRepository : IRegionRepository
+    {
+        private readonly WalkProjectDbContext _context;
+        public SqlRegionRepository(WalkProjectDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<Region> CreateAsync(Region region)
+        {
+            await _context.Regions.AddAsync(region);
+            await _context.SaveChangesAsync();
+            return region;
+        }
+
+        public async Task<Region?> DeleteAsync(Guid id)
+        {
+            var ResionRepo = await _context.Regions.FirstOrDefaultAsync(x => x.Id == id);
+            if (ResionRepo == null)
+            {
+                return null;
+            }
+            _context.Regions.Remove(ResionRepo);
+            await _context.SaveChangesAsync();
+            return ResionRepo;
+        }
+
+        public async Task<List<Region>> GetAllAsync()
+        {
+            return await _context.Regions.ToListAsync();
+        }
+
+        public async Task<Region?> GetBYIdAsync(Guid id)
+        {
+            return await _context.Regions.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<Region?> UpdateAsync(Guid id, Region region)
+        {
+            var existingRegion = await _context.Regions.FirstOrDefaultAsync(x => x.Id == id);
+            if (existingRegion == null)
+            {
+                return null;
+            }
+            existingRegion.Name = region.Name;
+            existingRegion.Code = region.Code;
+            existingRegion.RegionalImageUrl = region.RegionalImageUrl;
+
+            await _context.SaveChangesAsync();
+            return existingRegion;
+        }
+    }
+}
+
+8.Add in dependency in program.cs file:-
+//Add in AddScoped
+builder.Services.AddScoped<IRegionRepository,SqlRegionRepository>();
+var app = builder.Build();
