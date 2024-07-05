@@ -1,0 +1,65 @@
+//Create Seprate Model Folder
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EComm.Models
+{
+    public class Categories
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public int DisplayOrder { get; set; }
+    }
+}
+
+//Create Controller
+using EComm.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EComm.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CategoryController : ControllerBase
+    {
+        public static List<Categories> ListOfCategoris = new List<Categories>
+        {
+            new Categories{Id = 1, Title= "Sushil Thakur", DisplayOrder = 5},
+            new Categories{Id = 2, Title= "Sandeep Thakur", DisplayOrder = 9},
+            new Categories{Id = 3, Title= "Subhash Thakur", DisplayOrder = 8},
+            new Categories{Id = 4, Title= "Satya Thakur", DisplayOrder = 1},
+            new Categories{Id = 5, Title= "Sagar Thakur", DisplayOrder = 5},
+            new Categories{Id = 6, Title= "Amit Thakur", DisplayOrder = 7},
+            new Categories{Id = 7, Title= "Nandkishor Thakur", DisplayOrder = 5}
+        };
+
+        [HttpGet]
+        public IEnumerable<Categories> Get()
+        {
+            return ListOfCategoris;
+        }
+
+        [HttpPost]
+        public void Post([FromBody]Categories category)
+        {
+            ListOfCategoris.Add(category);
+        }
+
+        [HttpPut("{id}")]
+        public void Put(int id,[FromBody]Categories category)
+        {
+            ListOfCategoris[id] = category;
+        }
+
+        [HttpDelete("{id}")]
+        public void Delete(int id)
+        {
+            ListOfCategoris.RemoveAt(id);
+        }
+    }
+}
