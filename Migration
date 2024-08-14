@@ -1,0 +1,83 @@
+//Migration Code addColumn, DeleteColumn,etc..
+
+public class Book
+    {
+       
+        public int Id { get; set; }      
+     
+        public string BookName { get; set; }
+        public string AuthorName { get; set; }
+        public int Price { get; set; }
+       
+ 
+    }
+______________
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=DESKTOP-PSGQBOV;Database=master;MultipleActiveResultSets=True;Trusted_Connection=True;"
+  },
+builder.Services.AddDbContext<CFDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+_____________
+ public class CFDbContext: DbContext
+    {
+        public CFDbContext(DbContextOptions options) : base(options)
+        {
+
+        }
+        DbSet<Book> Books { get; set; }
+        DbSet<Demo> Demos { get; set; }
+    }
+____________________________
+1.
+Add-Migration Init   (create Table)
+Updata-Database
+2.
+Add New Column In Table
+
+ public string Title { get; set; } (model)
+Add-Migration AddLanguageColumn
+
+3
+Delete Column from Table
+
+ //   public string Title { get; set; }
+Add-Migration RemoveLanguageColumn
+Updata-Database
+
+4
+Change Column Size
+
+Add-Migration AddColumnSize
+Updata-Database
+[MaxLength(60)]
+        public string BookName { get; set; }
+
+5
+Make Column Not Null
+        [Required]
+        public string BookName { get; set; }
+Add-Migration MakeColumnNotNull
+Update-Database
+
+6
+Delete Table
+
+7
+Add Primary key
+  [Key]
+        public string BookName { get; set; }
+Add-Migration AddPrimaryKeyInEmpTable
+Update-Database
+
+8. Foreign Key
+
+ public class Demo
+    {
+        public string Title { get; set; }
+        public int Uid { get; set; }
+        [ForeignKey("Id")]
+        public Book Book { get; set; }
+    }
+DbSet<Demo> Demos { get; set; }
+Add-Migration ForeignKey
+Update-Database
