@@ -1,0 +1,467 @@
+//Model
+->SendMail.cs
+->WhatsApp.cs
+=>SendMail(Entities)
+namespace WhatsAppMailSendData.Model
+{
+    public class SendMail
+    {
+        public string MailSubject { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerEmail { get; set; }
+        public string MailBody { get; set; }
+    }
+}
+=>WhatsApp(Entities)
+using WhatsAppMailSendData.AppCodeGlobal;
+namespace WhatsAppMailSendData.Model
+{
+    public class WhatsApp
+    {
+        public string APIURL { get; set; } = "https://media.smsgupshup.com/GatewayAPI/rest";
+        public string UserId { get; set; } = GlobalEntities.WUserId;
+        public string Password { get; set; } = GlobalEntities.WPassword;
+        public string Channel { get; set; } = "nB$yvp4U";
+        public string AuthSchema { get; set; } = "plain";
+        public string Version { get; set; } = "1.1";
+        public string Format { get; set; } = "text";
+        public string Method { get; set; } = "SendMessage";
+        public string SendTo { get; set; }
+        public string MessageType { get; set; } = "DATA_TEXT";
+        public string Message { get; set; }
+        public string MediaURL { get; set; }
+        public string DataEncoding { get; set; } = "text";
+        public bool IsHSM { get; set; } = false;
+        public string hsmTemplateId { get; set; }
+    }
+}
+//Global(Model)
+=>GlobalEntites(GlobalClass)
+namespace WhatsAppMailSendData.AppCodeGlobal
+{
+    public class GlobalEntities
+    {
+        public static string SecretKey { get; set; } = "Admin@123";
+        public static string WUserId { get; set; } = "2000241495";
+        public static string WPassword { get; set; } = "nB$yvp4U";
+        public static bool IsCronJobRunning { get; set; } = false;
+        public static string MobileNumber { get; set; } = "919109190390";
+        public static string MobileNumber2 { get; set; } = "919424495391";
+        public static string MobileNumber3 { get; set; } = "918982842284";
+        public static string MobileNumber4 { get; set; } = "916201941071";
+    }
+}
+//Services(Class)
+->CronJob.cs
+->MailService.cs
+->WhatsAppService.cs
+using System.Text.Json;
+using WhatsAppMailSendData.AppCodeGlobal;
+using WhatsAppMailSendData.Model;
+namespace WhatsAppMailSendData.Service
+{
+    public class CronJob
+    {
+        private Timer timer;
+        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly string _apiUrl = "http://mpexcise.ecosmartdc.com:6004";
+        public CronJob()
+        {        
+            timer = new Timer(CheckSchedule, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        }
+        private void CheckSchedule(object state)
+        {
+            DateTime now = DateTime.Now;
+            if (now.Second == 0)
+            {
+                Task.Run(() => ExecuteTask());
+            }
+        }
+        private async Task ExecuteTask()
+        {
+            string apicall = _apiUrl + $"/api/CameraTrackingData/Pagination?dateFrom={DateTime.Now.AddMinutes(-1).ToString("yyyy-MM-ddTHH:mm:ss")}&dateTo={DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")}&orderBy=Id&orderType=desc";
+            try
+            {
+                var response = await _httpClient.GetStringAsync(apicall);
+                cmtdata cmtdadsad = JsonSerializer.Deserialize<cmtdata>(response);
+                List<CameraTrackingData> cameraList = cmtdadsad.cameraTrackingData;
+                if (cameraList != null && cameraList.Count() > 0)
+                {
+                    WhatsApp wModel = new WhatsApp();
+                    wModel.SendTo = GlobalEntities.MobileNumber; // Replace with the phone number you want to opt in
+                    wModel.AuthSchema = "plain";
+                    wModel.Channel = "WHATSAPP";
+                    wModel.Version = "1.1";
+                    wModel.Format = "json";
+                    wModel.Method = "OPT_IN";
+                    await WhatsAppService.OptIn(wModel);
+                    WhatsApp wModel2 = new WhatsApp();
+                    wModel2.SendTo = GlobalEntities.MobileNumber2; // Replace with the phone number you want to opt in
+                    wModel2.AuthSchema = "plain";
+                    wModel2.Channel = "WHATSAPP";
+                    wModel2.Version = "1.1";
+                    wModel2.Format = "json";
+                    wModel2.Method = "OPT_IN";
+                    await WhatsAppService.OptIn(wModel2);
+                    WhatsApp wModel3 = new WhatsApp();
+                    wModel3.SendTo = GlobalEntities.MobileNumber3; // Replace with the phone number you want to opt in
+                    wModel3.AuthSchema = "plain";
+                    wModel3.Channel = "WHATSAPP";
+                    wModel3.Version = "1.1";
+                    wModel3.Format = "json";
+                    wModel3.Method = "OPT_IN";
+                    await WhatsAppService.OptIn(wModel3);
+                    WhatsApp wModel4 = new WhatsApp();
+                    wModel4.SendTo = GlobalEntities.MobileNumber4; // Replace with the phone number you want to opt in
+                    wModel4.AuthSchema = "plain";
+                    wModel4.Channel = "WHATSAPP";
+                    wModel4.Version = "1.1";
+                    wModel4.Format = "json";
+                    wModel4.Method = "OPT_IN";
+                    await WhatsAppService.OptIn(wModel4);
+                    Thread.Sleep(1000);
+                }
+                foreach (var rdata in cameraList)
+                {
+                    string wht1message = $"https://media.smsgupshup.com/GatewayAPI/rest?userid={GlobalEntities.WUserId}&password={GlobalEntities.WPassword}&send_to={GlobalEntities.MobileNumber}&v=1.1&format=json&msg_type=TEXT&method=SENDMESSAGE&msg=Hello+Sir%0AANPR+Alert+from+VMS+Camera+Id+%3A+{rdata.cameraId}+%2C+Camera+Name%3A+{rdata.camera.name}%2C+Camera+Location%3A+{rdata.camera.Location} ";
+                    var wht1 = await _httpClient.GetStringAsync(wht1message);
+                    string wht2message = $"https://media.smsgupshup.com/GatewayAPI/rest?userid={GlobalEntities.WUserId}&password={GlobalEntities.WPassword}&send_to={GlobalEntities.MobileNumber2}&v=1.1&format=json&msg_type=TEXT&method=SENDMESSAGE&msg=Hello+Sir%0AANPR+Alert+from+VMS+Camera+Id+%3A+{rdata.cameraId}+%2C+Camera+Name%3A+{rdata.camera.name}%2C+Camera+Location%3A+{rdata.camera.Location} ";
+                    var wht2 = await _httpClient.GetStringAsync(wht2message);
+                    string wht3message = $"https://media.smsgupshup.com/GatewayAPI/rest?userid={GlobalEntities.WUserId}&password={GlobalEntities.WPassword}&send_to={GlobalEntities.MobileNumber3}&v=1.1&format=json&msg_type=TEXT&method=SENDMESSAGE&msg=Hello+Sir%0AANPR+Alert+from+VMS+Camera+Id+%3A+{rdata.cameraId}+%2C+Camera+Name%3A+{rdata.camera.name}%2C+Camera+Location%3A+{rdata.camera.Location} ";
+                    var wht3 = await _httpClient.GetStringAsync(wht3message);
+                    string wht4message = $"https://media.smsgupshup.com/GatewayAPI/rest?userid={GlobalEntities.WUserId}&password={GlobalEntities.WPassword}&send_to={GlobalEntities.MobileNumber4}&v=1.1&format=json&msg_type=TEXT&method=SENDMESSAGE&msg=Hello+Sir%0AANPR+Alert+from+VMS+Camera+Id+%3A+{rdata.cameraId}+%2C+Camera+Name%3A+{rdata.camera.name}%2C+Camera+Location%3A+{rdata.camera.Location} ";
+                    var wht4 = await _httpClient.GetStringAsync(wht4message);
+                    SendMail smm = new SendMail();
+                    smm.CustomerName = "mp exise";
+                    smm.CustomerEmail = "vishal.gupta@ajeevi.com";
+                    smm.MailSubject = $"ANPR Alert from cameraId :{rdata.cameraId} - camera Name: {rdata.camera.name} - VichelNo: {rdata.VichelNo}";
+                    smm.MailBody = $"ANPR Alert from cameraId :{rdata.cameraId} <br>camera Name: {rdata.camera.name} <br>VichelImage: <img src='https://anpr.ajeevi.in/{rdata.VichelImage}' /> <br> VichelNo: {rdata.VichelNo}";
+                    MailService.Send2(smm);
+                    SendMail smm2 = new SendMail();
+                    smm2.CustomerName = "mp exise";
+                    smm2.CustomerEmail = "jitendra@gmail.com";
+                    smm2.MailSubject = $"ANPR Alert from cameraId :{rdata.cameraId} - camera Name: {rdata.camera.name} - VichelNo: {rdata.VichelNo}";
+                    smm2.MailBody = $"ANPR Alert from cameraId :{rdata.cameraId} <br>camera Name: {rdata.camera.name} <br>VichelImage: <img src='https://anpr.ajeevi.in/{rdata.VichelImage}' /> <br> VichelNo: {rdata.VichelNo}";
+                    MailService.Send2(smm2);
+                    SendMail smm3 = new SendMail();
+                    smm3.CustomerName = "mp exise";
+                    smm3.CustomerEmail = "sushilthakur992@gmail.com";
+                    smm3.MailSubject = $"ANPR Alert from cameraId :{rdata.cameraId} - camera Name: {rdata.camera.name} - VichelNo: {rdata.VichelNo}";
+                    smm3.MailBody = $"ANPR Alert from cameraId :{rdata.cameraId} <br>camera Name: {rdata.camera.name} <br>VichelImage: <img src='https://anpr.ajeevi.in/{rdata.VichelImage}' /> <br> VichelNo: {rdata.VichelNo}";
+                    MailService.Send2(smm3);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+        public void Stop()
+        {
+            timer?.Change(Timeout.Infinite, 0);
+        }
+    }
+    public class cmtdata
+    {
+        public int totalCount { get; set; }
+        public int pageNumber { get; set; }
+        public int pageSize { get; set; }
+        public List<CameraTrackingData> cameraTrackingData { get; set; }
+    }
+    public class CameraTrackingData
+    {
+        public int Id { get; set; }
+        public Camera? camera { get; set; }
+        public int cameraId { get; set; }
+        public string? VichelImage { get; set; }
+        public string? NoPlateImage { get; set; }
+        public string? VichelNo { get; set; }
+        public char AlertType { get; set; }
+        public bool Status { get; set; } = true;
+        public DateTime RegDate { get; set; } = DateTime.Now;
+    }
+    public class Camera
+    {
+        public int Id { get; set; }
+        public string? name { get; set; }
+        public string? cameraIP { get; set; }
+        public string? Area { get; set; }
+        public string? Location { get; set; }
+        public string? Zone { get; set; }
+        public int NVRId { get; set; }
+        public int GroupId { get; set; }
+        public string? Brand { get; set; }
+        public string? Manufacture { get; set; }
+        public string? MacAddress { get; set; }
+        public string? Make { get; set; }
+        public string? Model { get; set; }
+        public string? Unit { get; set; }
+        public string? Standard { get; set; }
+        public string? Profile { get; set; }
+        public string? Protocol { get; set; }
+        public int Port { get; set; }
+        public int ChannelId { get; set; }
+        public decimal? Latitude { get; set; }
+        public decimal? Longitude { get; set; }
+        public DateTime? InstallationDate { get; set; }
+        public DateTime? LastLive { get; set; }
+        public string? rTSPURL { get; set; }
+        public int PinCode { get; set; }
+        public bool Status { get; set; } = true;
+        public DateTime? UpdateDate { get; set; }
+        public DateTime RegDate { get; set; } = DateTime.Now;
+    }
+}
+=>
+using System.Net.Mail;
+using WhatsAppMailSendData.Model;
+namespace WhatsAppMailSendData.Service
+{
+    public class MailService
+    {
+        public static void Send2(SendMail mModel)
+        {
+            try
+            {
+                string SendFrom = "sushil@gmail.com";
+                string SendPassword = "Pokemon@#32189";
+                string Body = mModel.MailBody;
+                MailAddress From = new MailAddress(SendFrom);
+                MailAddress To = new MailAddress(mModel.CustomerEmail);
+                MailMessage MyMessage = new MailMessage(From, To);
+                MyMessage.IsBodyHtml = true;
+                MyMessage.Subject = mModel.MailSubject;// "Waredot Total Security mail verification code";
+                MyMessage.Body = Body;
+                SmtpClient emailClient = new SmtpClient("smtp.hostinger.com", 587);
+                System.Net.NetworkCredential NTLMAuthentication = new System.Net.NetworkCredential(SendFrom, SendPassword);
+                emailClient.UseDefaultCredentials = false;
+                emailClient.Credentials = NTLMAuthentication;
+                emailClient.EnableSsl = true;
+                emailClient.Send(MyMessage);
+            }
+            catch (Exception ex)
+            {
+                //WriteLog.WriteLogs(ex.Message);
+            }
+        }
+    }
+}
+=>
+using System.Net.Http.Headers;
+using WhatsAppMailSendData.Model;
+namespace WhatsAppMailSendData.Service
+{
+    public class WhatsAppService
+    {
+        public static async Task<string> OptIn(WhatsApp wModel)
+        {
+            // Construct the URL with query parameters
+            string url = $"{wModel.APIURL}?method={wModel.Method}&format={wModel.Format}&userid={wModel.UserId}&password={wModel.Password}" +
+                         $"&phone_number={wModel.SendTo}&v={wModel.Version}&auth_scheme={wModel.AuthSchema}&channel={wModel.Channel}";
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    // Send GET request
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    // Check if request was successful
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Read response content
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine("API Response:");
+                        Console.WriteLine(responseContent);
+                        return responseContent;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to call API. Status code: {response.StatusCode}");
+                        return response.StatusCode.ToString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception occurred: {ex.Message}");
+                    return ex.ToString();
+                }
+            }
+        }
+        public static async Task<string> SendTemplate(WhatsApp wModel)
+        {
+            //string apiUrl = "https://media.smsgupshup.com/GatewayAPI/rest";
+            // Adjusted parameters with supported data_encoding
+            var requestData = new List<KeyValuePair<string, string>>
+    {
+        new KeyValuePair<string, string>("send_to", wModel.SendTo),
+        //new KeyValuePair<string, string>("msg_type", "HSM"),
+        new KeyValuePair<string, string>("userid", wModel.UserId),
+        new KeyValuePair<string, string>("auth_scheme", wModel.AuthSchema),
+        new KeyValuePair<string, string>("password", wModel.Password),
+        new KeyValuePair<string, string>("method", wModel.Method),
+        new KeyValuePair<string, string>("v", wModel.Version),
+        //new KeyValuePair<string, string>("format", "json"),
+        new KeyValuePair<string, string>("msg", wModel.Message),
+        //new KeyValuePair<string, string>("data_encoding", "TEXT"),
+        //new KeyValuePair<string, string>("isHSM", "false"),
+        //new KeyValuePair<string, string>("isTemplate", "false"),
+        //new KeyValuePair<string, string>("data_encoding", "TEXT"),
+        // Use TEXT or UNICODE_TEXT
+    };
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // Create form content with request data
+                    var formContent = new FormUrlEncodedContent(requestData);
+                    // Set the Content-Type header explicitly
+                    formContent.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+                    // Send the POST request
+                    var response = await client.PostAsync(wModel.APIURL, formContent);
+                    // Check if successful
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Read response content
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine("API Response:");
+                        Console.WriteLine(responseContent);
+                        return responseContent;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to call API. Status code: {response.StatusCode}");
+                        return response.StatusCode.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+        }
+        public static async Task<string> SendMessage(WhatsApp wModel)
+        {
+            var formData = new List<KeyValuePair<string, string>>
+        {
+            new KeyValuePair<string, string>("send_to", wModel.SendTo),
+            new KeyValuePair<string, string>("msg_type", wModel.MessageType),
+            new KeyValuePair<string, string>("userid", wModel.UserId),
+            new KeyValuePair<string, string>("auth_scheme", wModel.AuthSchema),
+            new KeyValuePair<string, string>("password", wModel.Password),
+            new KeyValuePair<string, string>("v", wModel.Version),
+            //new KeyValuePair<string, string>("format", format),
+            new KeyValuePair<string, string>("isHSM", wModel.IsHSM.ToString()),
+            new KeyValuePair<string, string>("data_encoding", wModel.DataEncoding),
+            new KeyValuePair<string, string>("method", wModel.Method),
+            //new KeyValuePair<string, string>("media_url", mediaUrl)
+            new KeyValuePair<string, string>("msg", wModel.Message)
+        };
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    // Create form content with request data
+                    var formContent = new FormUrlEncodedContent(formData);
+                    // Set the Content-Type header explicitly
+                    formContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-www-form-urlencoded");
+                    // Send the POST request
+                    HttpResponseMessage response = await client.PostAsync(wModel.APIURL, formContent);
+                    // Check if request was successful
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Read response content
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine("API Response:");
+                        Console.WriteLine(responseContent);
+                        return responseContent;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to call API. Status code: {response.StatusCode}");
+                        return response.StatusCode.ToString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception occurred: {ex.Message}");
+                    return ex.ToString();
+                }
+            }
+        }
+    }
+}
+//WhatsAppAndMain(Controller)
+->WhatsAppAndMailController.cs
+using Microsoft.AspNetCore.Mvc;
+using WhatsAppMailSendData.AppCodeGlobal;
+using WhatsAppMailSendData.Model;
+using WhatsAppMailSendData.Service;
+namespace WhatsAppMailSendData.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class WhatsAppAndMailController : ControllerBase
+    {
+        [HttpGet("opt-in")]
+        public async Task<string> WhatsappOptIn(string mobile, string secretkey)
+        {
+            if (secretkey != GlobalEntities.SecretKey)
+            {
+                return "secret key not valid";
+            }
+            WhatsApp wModel = new WhatsApp();
+            wModel.SendTo = mobile; // Replace with the phone number you want to opt in
+            wModel.AuthSchema = "plain";
+            wModel.Channel = "WHATSAPP";
+            wModel.Version = "1.1";
+            wModel.Format = "json";
+            wModel.Method = "OPT_IN";
+            return await WhatsAppService.OptIn(wModel);
+        }
+        [HttpGet("send-template")]
+        public async Task<string> WhatsappSendTemplate(string mobile, string templateId, string secretkey)
+        {
+            if (secretkey != GlobalEntities.SecretKey)
+            {
+                return "secret key not valid";
+            }
+            WhatsApp wModel = new WhatsApp();
+            wModel.SendTo = mobile; // Replace with the phone number you want to opt in
+            wModel.AuthSchema = "plain";
+            wModel.Version = "1.1";
+            wModel.Method = "SendMessage";
+            wModel.Message = "this is test template message";
+            return await WhatsAppService.SendTemplate(wModel);
+        }
+        [HttpGet("send-message")]
+        public async Task<string> WhatsappSendMessage(string mobile, string message, string secretkey)
+        {
+            if (secretkey != GlobalEntities.SecretKey)
+            {
+                return "secret key not valid";
+            }
+            WhatsApp wModel = new WhatsApp();
+            wModel.SendTo = mobile; // Replace with the phone number you want to opt in
+            wModel.AuthSchema = "plain";
+            wModel.Version = "1.1";
+            wModel.MessageType = "DATA_TEXT";
+            wModel.Method = "SendMessage";
+            wModel.Message = message;
+            return await WhatsAppService.SendMessage(wModel);
+        }
+        [HttpGet]
+        [Route("/default/api/start-cronjob")]
+        public string StartCronJob()
+        {
+            if (GlobalEntities.IsCronJobRunning)
+            {
+                return "CronJob Already Running";
+            }
+            else
+            {
+                CronJob cs = new CronJob();
+                GlobalEntities.IsCronJobRunning = true;
+                return "Cronjob Started";
+            }
+        }
+    }
+}
